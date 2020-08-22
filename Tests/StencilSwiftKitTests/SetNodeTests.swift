@@ -89,6 +89,30 @@ class SetNodeTests: XCTestCase {
     XCTAssertEqual(context["a"] as? String, "hello")
     XCTAssertEqual(context["b"] as? String, "world")
   }
+  
+  func testModificationVisibleOutsideForLoop() throws {
+    // start with a=1, b=2
+    let context = Context(dictionary: ["a": [1,2,3,4], "b": 2])
+    XCTAssertEqual(context["a"] as! [Int], [1,2,3,4])
+    XCTAssertEqual(context["b"] as? Int, 2)
+    
+    let tokens: [Token] = [
+    .block(value: "for elem in a"),
+      .block(value:"set b"),
+      .variable(value: "elem"),
+      .block(value: "endset"),
+      .block(value: "endfor")
+    ]
+    let parser = TokenParser(tokens: tokens, environment: stencilSwiftEnvironment())
+    
+    let nodes = (try? parser.parse()) ?? []
+    for node in nodes{
+      let _ = try? node.render(context)
+    }
+//    print("b=\(context["b"])")
+    XCTAssertEqual(context["b"] as? String, "4")
+  }
+
 
   func testContextPush() throws {
     // start with a=1, b=2
